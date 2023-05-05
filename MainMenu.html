@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Land of Recipes</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>Land of Recipes</h1>
+        <nav>
+            <ul>
+                <li><a href="#" id="all">All Recipes</a></li>
+                <li><a href="#" id="beef">Beef</a></li>
+                <li><a href="#" id="chicken">Chicken</a></li>
+                <li><a href="#" id="dessert">Dessert</a></li>
+                <li><a href="#" id="vegetarian">Vegetarian</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main id="recipe-container"></main>
+    <script src="script.js"></script>
+</body>
+</html>
+<style>
+    body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    background-color: #333;
+    color: #fff;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+nav ul {
+    list-style: none;
+    display: flex;
+    align-items: center;
+}
+
+nav li {
+    margin: 0 10px;
+}
+
+nav a {
+    color: #fff;
+    text-decoration: none;
+    padding: 10px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+nav a:hover {
+    background-color: #555;
+}
+
+main {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-gap: 20px;
+    padding: 20px;
+}
+</style>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function() {
+    loadRecipes('all'); // sayfa ilk açıldığında tüm tarifler yüklenir
+
+    $('nav a').click(function(e) {
+        e.preventDefault();
+        let category = $(this).attr('id');
+        loadRecipes(category);
+    });
+
+    function loadRecipes(category) {
+        $('#recipe-container').empty(); // önceki tarifleri temizle
+
+        $.ajax({
+            url: `https://www.themealdb.com/api/json/v1/1/filter.php?c=${category}`,
+            type: 'GET',
+            success: function(data) {
+                $.each(data.meals, function(i, meal) {
+                    let recipeHTML = `
+                        <div class="recipe">
+                            <img src="${meal.strMealThumb}" alt="${meal.strMeal}">
+                            <h2>${meal.strMeal}</h2>
+                            <a href="#" class="btn">View Recipe</a>
+                        </div>
+                    `;
+                    $('#recipe-container').append(recipeHTML);
+                });
+            },
+            error: function(error) {
+                console.log(error);
+            }
+        });
+    }
+});
+</script>
