@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Land of Recipes</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
 </head>
 <body>
     <header>
@@ -24,13 +25,16 @@
 </html>
 <style>
     body {
-    font-family: Arial, sans-serif;
+    background-color: #F2EFC7;
+    background-size: cover;
+    font-family: 'Roboto', sans-serif;
     margin: 0;
     padding: 0;
 }
 
-header {
-    background-color: #333;
+header { 
+    background-size: cover;
+    background-color: #355834;
     color: #fff;
     padding: 20px;
     display: flex;
@@ -66,40 +70,106 @@ main {
     grid-gap: 20px;
     padding: 20px;
 }
+.recipe {
+    border: 1px solid #ccc;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0px 0px 5px #ccc;
+    transition: transform 0.3s ease;
+    cursor: pointer;
+    }
+    .recipe:hover {
+    transform: scale(1.05);
+}
+.recipe-details {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+.recipe-details img {
+    margin-right: 20px;
+    max-width: 50%;
+}
+.recipe-details h3 {
+    margin-top: 0;
+}
+
 </style>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     $(document).ready(function() {
-    loadRecipes('all'); // sayfa ilk açıldığında tüm tarifler yüklenir
+        loadRecipes('all'); // sayfa ilk açıldığında tüm tarifler yüklenir
 
-    $('nav a').click(function(e) {
-        e.preventDefault();
-        let category = $(this).attr('id');
-        loadRecipes(category);
-    });
+        $('nav a').click(function(e) {
+            e.preventDefault();
+            let category = $(this).attr('id');
+            loadRecipes(category);
+        });
+        function loadRecipes(category) {
 
-    function loadRecipes(category) {
-        $('#recipe-container').empty(); // önceki tarifleri temizle
+            $('#recipe-container').empty(); // önceki tarifleri temizle
 
-        $.ajax({
-            url: `https://www.themealdb.com/api/json/v1/1/filter.php?c=${category}`,
-            type: 'GET',
-            success: function(data) {
-                $.each(data.meals, function(i, meal) {
+            $.ajax({
+                url: `https://www.themealdb.com/api/json/v1/1/filter.php?c=${category}`,
+                type: 'GET',
+                success: function(data) {
+                    $.each(data.meals.slice(0, 10), function(i, meal) { // sadece ilk 10 tarifi göster
+                        let recipeHTML = `
+                            <div class="recipe">
+                                <img src="${meal.strMealThumb}" alt="${meal.strMeal}">
+                                <h2>${meal.strMeal}</h2>
+                                <a href="#" class="btn" data-mealid="${meal.idMeal}">View Recipe</a>
+                            </div>
+                        `;
+                        $('#recipe-container').append(recipeHTML);
+                    });
+                    // Tarifleri yükledikten sonra, "View Recipe" butonlarına click event listener'ı ekle
+                    $('.recipe a').click(function(e) {
+                        e.preventDefault();
+                        let mealId = $(this).data('mealid');
+                        getRecipeDetails(mealId);
+                    });
+                },
+                error: function(error) {
+                    console.log(error);
+                }
+            });
+            }
+
+        function getRecipeDetails(mealId) {
+            $.ajax({
+                url: `https://www.themealdb.com/api/json/v1/1/lookup.php?i=${mealId}`,
+                type: 'GET',
+                success: function(data) {
+                    let recipe = data.meals[0];
                     let recipeHTML = `
-                        <div class="recipe">
-                            <img src="${meal.strMealThumb}" alt="${meal.strMeal}">
-                            <h2>${meal.strMeal}</h2>
-                            <a href="#" class="btn">View Recipe</a>
+                        <div class="recipe-details">
+                            <h2>${recipe.strMeal}</h2>
+                            <img src="${recipe.strMealThumb}" alt="${recipe.strMeal}">
+                            <h3>Ingredients</h3>
+                            <ul>
+                    `;
+                    for (let i = 1; i <= 20; i++) {
+                        let ingredient = recipe[`strIngredient${i}`];
+                        let measurement = recipe[`strMeasure${i}`];
+                        if (ingredient !== '' && ingredient !== null) {
+                            recipeHTML += `
+                                <li>${measurement} ${ingredient}</li>
+                            `;
+                        }
+                    }
+                    recipeHTML += `
+                            </ul>
+                            <h3>Instructions</h3>
+                            <p>${recipe.strInstructions}</p>
                         </div>
                     `;
-                    $('#recipe-container').append(recipeHTML);
-                });
-            },
-            error: function(error) {
-                console.log(error);
-            }
-        });
-    }
-});
+                    $('#recipe-container').html(recipeHTML);
+                },
+                error: function(error) {
+                    console.log(error);
+                }
+            });
+        }
+    });
 </script>
